@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will You Be My Valentine?</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@400;700&display=swap');
+
+        :root {
+            --primary: #ff4d6d;
+            --secondary: #ff8fa3;
+            --bg: #fff0f3;
+            --text: #590d22;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Prevent text selection */
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden; /* Prevent scrolling */
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Screens --- */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: all;
+            z-index: 10;
+        }
+
+        /* --- Game Screen --- */
+        #game-screen {
+            background: linear-gradient(180deg, #ffeef2 0%, #ffc2d1 100%);
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            z-index: 20;
+        }
+
+        h2 {
+            font-family: 'Pacifico', cursive;
+            color: var(--primary);
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0px white;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid var(--primary);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff4d6d, #ff758f);
+            transition: width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        canvas {
+            display: block;
+            touch-action: none; 
+        }
+
+        /* --- Proposal Screen --- */
+        #proposal-screen {
+            background: radial-gradient(circle, #fff0f3 0%, #ffccd5 100%);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .heart-beat {
+            font-size: 80px;
+            color: var(--primary);
+            animation: beat 1s infinite alternate;
+            margin-bottom: 20px;
+        }
+
+        @keyframes beat {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .question {
+            font-family: 'Pacifico', cursive;
+            font-size: 2.5rem;
+            color: #c9184a;
+            margin-bottom: 40px;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+        }
+
+        .buttons {
+            position: relative;
+            width: 100%;
+            min-height: 80px; 
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            font-family: 'Quicksand', sans-serif;
+            white-space: nowrap;
+        }
+
+        .btn-yes {
+            background-color: var(--primary);
+            color: white;
+            transition: transform 0.2s;
+            z-index: 20; /* Keep yes button clickable */
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            background-color: #d62f4d;
+        }
+
+        .btn-no {
+            background-color: white;
+            color: var(--text);
+            /* Important for the movement logic */
+            position: relative; 
+            transition: all 0.15s ease-out; /* Fast smooth movement */
+            z-index: 100; /* Ensure it floats above everything else */
+        }
+
+        /* --- Success Screen --- */
+        #success-screen {
+            background: #fff0f3;
+            text-align: center;
+        }
+
+        .big-love {
+            font-family: 'Pacifico', cursive;
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        p.sub-text {
+            font-size: 1.2rem;
+            color: var(--text);
+        }
+
+        /* Overlay */
+        #start-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 50;
+        }
+
+        .start-btn {
+            margin-top: 20px;
+            padding: 12px 35px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 77, 109, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 77, 109, 0); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Instructions Overlay -->
+    <div id="start-overlay">
+        <h1 style="font-family:'Pacifico', cursive; margin-bottom:10px;">Catch My Heart!</h1>
+        <p style="font-size: 1.1rem; text-align:center; max-width:80%;">Drag the basket to collect hearts.<br>Fill the meter to 100%!</p>
+        <button class="start-btn" onclick="startGame()">Start Game</button>
+    </div>
+
+    <!-- Screen 1: The Game -->
+    <div id="game-screen" class="screen active">
+        <div id="ui-layer">
+            <h2>Love Meter</h2>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- Screen 2: The Proposal -->
+    <div id="proposal-screen" class="screen">
+        <div class="heart-beat">💖</div>
+        <div class="question">Will you be my Valentine?</div>
+        <div class="buttons">
+            <button class="btn btn-yes" onclick="handleYes()">YES! 😍</button>
+            <!-- The No Button has event listeners attached in JS -->
+            <button class="btn btn-no" id="noBtn">No 😢</button>
+        </div>
+    </div>
+
+    <!-- Screen 3: Success -->
+    <div id="success-screen" class="screen">
+        <div class="big-love">Yay! I Love You! ❤️</div>
+        <p class="sub-text">Best Valentine Ever!</p>
+        <br>
+        <div style="font-size: 5rem;">💏</div>
+    </div>
+
+    <script>
+        // --- Game Logic ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const progressBar = document.getElementById('progressBar');
+        const gameScreen = document.getElementById('game-screen');
+        const proposalScreen = document.getElementById('proposal-screen');
+        const successScreen = document.getElementById('success-screen');
+        const startOverlay = document.getElementById('start-overlay');
+        const noBtn = document.getElementById('noBtn');
+
+        let score = 0;
+        let gameRunning = false;
+        let animationId;
+        
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Game Objects
+        const basket = {
+            x: window.innerWidth / 2,
+            y: window.innerHeight - 80,
+            width: 80,
+            height: 50,
+            icon: '🧺'
+        };
+
+        let hearts = [];
+
+        class Heart {
+            constructor() {
+                this.x = Math.random() * (canvas.width - 30);
+                this.y = -30;
+                this.speed = Math.random() * 3 + 2; 
+                this.size = 30;
+                this.icon = '❤️';
+            }
+
+            draw() {
+                ctx.font = `${this.size}px Arial`;
+                ctx.fillText(this.icon, this.x, this.y);
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+        }
+
+        // Input Handling
+        function moveBasket(clientX) {
+            basket.x = clientX - basket.width / 2;
+            if (basket.x < 0) basket.x = 0;
+            if (basket.x + basket.width > canvas.width) basket.x = canvas.width - basket.width;
+        }
+
+        canvas.addEventListener('mousemove', (e) => moveBasket(e.clientX));
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            moveBasket(e.touches[0].clientX);
+        }, { passive: false });
+
+        function startGame() {
+            startOverlay.style.display = 'none';
+            gameRunning = true;
+            loop();
+        }
+
+        function loop() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Basket
+            ctx.font = '50px Arial';
+            ctx.fillText(basket.icon, basket.x, basket.y);
+
+            // Spawn Hearts
+            if (Math.random() < 0.03) { 
+                hearts.push(new Heart());
+            }
+
+            // Update Hearts
+            for (let i = 0; i < hearts.length; i++) {
+                let h = hearts[i];
+                h.update();
+                h.draw();
+
+                // Collision
+                if (h.y > basket.y - 40 && h.y < basket.y + 20) {
+                    if (h.x > basket.x - 20 && h.x < basket.x + basket.width) {
+                        hearts.splice(i, 1);
+                        i--;
+                        increaseScore();
+                        continue;
+                    }
+                }
+
+                if (h.y > canvas.height) {
+                    hearts.splice(i, 1);
+                    i--;
+                }
+            }
+            animationId = requestAnimationFrame(loop);
+        }
+
+        function increaseScore() {
+            score += 5; 
+            if (score > 100) score = 100;
+            
+            progressBar.style.width = score + '%';
+
+            if (score >= 100) {
+                endGame();
+            }
+        }
+
+        function endGame() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            setTimeout(() => {
+                gameScreen.classList.remove('active');
+                proposalScreen.classList.add('active');
+            }, 500);
+        }
+
+        // --- Proposal Logic (THE SNEAKY NO BUTTON) ---
+
+        // Attach events to handle mouse, touch, and clicks
+        noBtn.addEventListener('mouseover', moveButton);
+        noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveButton(); });
+        noBtn.addEventListener('click', (e) => { e.preventDefault(); moveButton(); });
+
+        function moveButton() {
+            // Get viewport dimensions
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // Get button dimensions
+            const btnW = noBtn.offsetWidth;
+            const btnH = noBtn.offsetHeight;
+
+            // Calculate random position
+            // We use padding (50px) to ensure it doesn't get stuck on edges
+            const newX = Math.random() * (width - btnW - 100) + 50;
+            const newY = Math.random() * (height - btnH - 100) + 50;
+
+            // Switch to fixed position so it can go ANYWHERE on the screen
+            noBtn.style.position = 'fixed'; 
+            noBtn.style.left = `${newX}px`;
+            noBtn.style.top = `${newY}px`;
+        }
+
+        function handleYes() {
+            proposalScreen.classList.remove('active');
+            successScreen.classList.add('active');
+            startConfetti();
+        }
+
+        // --- Confetti ---
+        function startConfetti() {
+            const confettiCanvas = document.createElement('canvas');
+            confettiCanvas.style.position = 'fixed';
+            confettiCanvas.style.top = '0';
+            confettiCanvas.style.left = '0';
+            confettiCanvas.style.pointerEvents = 'none';
+            confettiCanvas.style.zIndex = '999';
+            successScreen.appendChild(confettiCanvas);
+
+            const cCtx = confettiCanvas.getContext('2d');
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#ff4d6d', '#ff758f', '#c9184a', '#ffe5ec', '#ffccd5'];
+
+            for(let i=0; i<150; i++) {
+                pieces.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 10 + 5,
+                    speed: Math.random() * 4 + 2,
+                    wobble: Math.random() * 10,
+                    wobbleSpeed: Math.random() * 0.1 + 0.05
+                });
+            }
+
+            function animateConfetti() {
+                cCtx.clearRect(0,0, confettiCanvas.width, confettiCanvas.height);
+                
+                pieces.forEach(p => {
+                    p.y += p.speed;
+                    p.wobble += p.wobbleSpeed;
+                    p.x += Math.sin(p.wobble) * 2;
+
+                    if (p.y > confettiCanvas.height) {
+                        p.y = -20;
+                        p.x = Math.random() * confettiCanvas.width;
+                    }
+
+                    cCtx.fillStyle = p.color;
+                    cCtx.beginPath();
+                    cCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    cCtx.fill();
+                });
+
+                requestAnimationFrame(animateConfetti);
+            }
+            animateConfetti();
+        }
+
+    </script>
+</body>
+</html>
+
+
