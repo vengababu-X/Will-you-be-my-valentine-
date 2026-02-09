@@ -60,7 +60,7 @@ No frameworks. No dependencies. No unnecessary complexity.
 ## 🚀 How to Run the Project
 
 
-git clone https://github.com/vengababu-X/Will-you-be-my-valentine-.git
+git clone https://vengababu-x.github.io/Will-you-be-my-valentine-/
 
 Open index.html in your browser and let the animation speak for itself.
 
